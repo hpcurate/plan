@@ -327,42 +327,42 @@
 <script>
 // ── Task types ────────────────────────────────────────────────────────────────
 const TASK_TYPES = [
-  { key:'curate', label:'curate', pLabel:'curate',
+  { key:'curate', label:'curate', pLabel:'curate', color:'#A78BFA',
     subs:[
-      { display:'mixing',    section:'mixing' },
-      { display:'production',section:'production' },
-      { display:'socials',   section:'socials' },
+      { display:'mixing',     section:'mixing' },
+      { display:'production', section:'production' },
+      { display:'socials',    section:'socials' },
     ]},
-  { key:'alive',  label:'alive',  pLabel:'alive',
+  { key:'alive',  label:'alive',  pLabel:'alive',  color:'#b8255f',
     subs:[
-      { display:'kamo',       section:'kamo' },
-      { display:'activities', section:'activities' },
-      { display:'create',     section:'create' },
-      { display:'music',      section:'music' },
-      { display:'social',     section:'social' },
+      { display:'kamo',        section:'kamo' },
+      { display:'activities',  section:'activities' },
+      { display:'create',      section:'create' },
+      { display:'music',       section:'music' },
+      { display:'social',      section:'social' },
       { display:'movie | show',section:'movie | show' },
-      { display:'raves',      section:'raves' },
-      { display:'trip',       section:'trip' },
+      { display:'raves',       section:'raves' },
+      { display:'trip',        section:'trip' },
     ]},
-  { key:'admin',  label:'admin',  pLabel:'admin',
+  { key:'admin',  label:'admin',  pLabel:'admin',  color:'#808080',
     subs:[
       { display:'tasks', section:'admin | tasks' },
       { display:'rdv',   section:'admin | rdv' },
       { display:'calls', section:'admin | calls' },
     ]},
-  { key:'system', label:'system', pLabel:'system',
+  { key:'system', label:'system', pLabel:'system', color:'#158fad',
     subs:[
       { display:'update',   section:'system | update' },
       { display:'projects', section:'system | projects' },
     ]},
-  { key:'home',   label:'home',   pLabel:'home',
+  { key:'home',   label:'home',   pLabel:'home',   color:'#4073ff',
     subs:[
       { display:'food',      section:'home | food' },
       { display:'projects',  section:'home | projects' },
       { display:'chores',    section:'home | chores' },
       { display:'groceries', section:'home | groceries' },
     ]},
-  { key:'edu',    label:'edu',    pLabel:'edu',
+  { key:'edu',    label:'edu',    pLabel:'edu',    color:'#e05194',
     subs:[
       { display:'study',    section:'study' },
       { display:'practice', section:'practice' },
@@ -371,15 +371,9 @@ const TASK_TYPES = [
     ]},
 ];
 
-const TODOIST_COLORS = {
-  berry:'#b8255f', blue:'#4073ff', charcoal:'#808080',
-  coral:'#ff8d85', forest_green:'#299438', grape:'#884dff',
-  grey:'#808080', lavender:'#a8a8e8', lime_green:'#65d122',
-  magenta:'#e05194', mint_green:'#6fcfad', olive:'#a8b400',
-  orange:'#ff9a14', red:'#db4035', sky_blue:'#14aaf5',
-  salmon:'#ff8d85', taupe:'#a29b93', teal:'#158fad',
-  violet:'#7c4dff', yellow:'#fad000', no_color:'#4a4a4a',
-};
+function resolveColor(typeKey) {
+  return TASK_TYPES.find(t => t.key === typeKey)?.color || '#4a4a4a';
+}
 
 // ── State ─────────────────────────────────────────────────────────────────────
 let queue = [];
@@ -427,18 +421,12 @@ function renderHome() {
   }
 }
 
-function resolveColor(raw) {
-  if (!raw) return '#4a4a4a';
-  if (raw.startsWith('#')) return raw; // v1 API returns hex directly
-  return TODOIST_COLORS[raw] || '#4a4a4a'; // v2 named colors fallback
-}
 
 function renderProjects() {
   const list = document.getElementById('proj-list');
   list.innerHTML = '';
   TASK_TYPES.forEach(tt => {
-    const map = mappings[tt.key] || {};
-    const color = resolveColor(map.color);
+    const color = resolveColor(tt.key);
 
     const card = document.createElement('div');
     card.className = 'proj-card';
@@ -487,7 +475,7 @@ function renderQueue() {
 
   if (!n) {
     section.classList.add('hidden'); emptyMsg.classList.remove('hidden');
-    sendBtn.disabled = true; return;
+    sendBtn.disabled = true; sendBtn.textContent = 'send to todoist'; return;
   }
   section.classList.remove('hidden'); emptyMsg.classList.add('hidden');
   sendBtn.disabled = false;
@@ -495,8 +483,7 @@ function renderQueue() {
   sendBtn.textContent = `send ${n} task${n!==1?'s':''} to todoist`;
 
   list.innerHTML = queue.map((t,i) => {
-    const map = mappings[t.typeKey] || {};
-    const color = resolveColor(map.color);
+    const color = resolveColor(t.typeKey);
     const pills = [
       t.subType,
       t.block ? `@${t.block}` : null,
@@ -527,8 +514,7 @@ function openForm(typeKey, display, section) {
   try {
     const tt = TASK_TYPES.find(t => t.key === typeKey);
     if (!tt) { toast('Unknown project: ' + typeKey); return; }
-    const map = mappings[typeKey] || {};
-    const color = resolveColor(map.color);
+    const color = resolveColor(typeKey);
 
     formState = { typeKey, subType: display, section, block: null, time: null, priority: 2, subtasks: [], hasSub: false };
 
@@ -659,7 +645,7 @@ async function startSending() {
   let success = 0, failed = 0;
 
   for (const task of queue) {
-    const labels = [task.projectLabel, task.subType];
+    const labels = [task.projectLabel];
     if (task.block) labels.push(task.block);
     if (task.time) labels.push(task.time);
 
