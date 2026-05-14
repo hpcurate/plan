@@ -657,7 +657,7 @@ async function startSending() {
     log.scrollTop = log.scrollHeight;
 
     try {
-      const res = await fetch('https://todoist-proxy.hp-qrate.workers.dev/rest/v2/tasks', {
+      const res = await fetch('https://todoist-proxy.hp-qrate.workers.dev/api/v1/tasks', {
         method:'POST',
         headers:{ 'Authorization':'Bearer '+token, 'Content-Type':'application/json' },
         body: JSON.stringify(body),
@@ -673,7 +673,7 @@ async function startSending() {
           content: st, parent_id: created.id,
           due_string: 'today', priority: task.priority,
         };
-        const sr = await fetch('https://todoist-proxy.hp-qrate.workers.dev/rest/v2/tasks', {
+        const sr = await fetch('https://todoist-proxy.hp-qrate.workers.dev/api/v1/tasks', {
           method:'POST',
           headers:{ 'Authorization':'Bearer '+token, 'Content-Type':'application/json' },
           body: JSON.stringify(stBody),
@@ -748,7 +748,7 @@ async function connectTodoist() {
   btn.textContent = 'fetching…'; btn.disabled = true;
 
   try {
-    const res = await fetch('https://todoist-proxy.hp-qrate.workers.dev/rest/v2/projects', {
+    const res = await fetch('https://todoist-proxy.hp-qrate.workers.dev/api/v1/projects', {
       headers:{ 'Authorization':'Bearer '+tok }
     });
 
@@ -758,7 +758,7 @@ async function connectTodoist() {
     const projects = await res.json();
 
     // Fetch all sections
-    const secRes = await fetch('https://todoist-proxy.hp-qrate.workers.dev/rest/v2/sections', {
+    const secRes = await fetch('https://todoist-proxy.hp-qrate.workers.dev/api/v1/sections', {
       headers:{ 'Authorization':'Bearer '+tok }
     });
     if (secRes.ok) {
