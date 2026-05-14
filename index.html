@@ -755,15 +755,16 @@ async function connectTodoist() {
     if (res.status === 401) throw new Error('invalid token — check and paste again');
     if (res.status === 403) throw new Error('forbidden — token may lack permissions');
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const projects = await res.json();
+    const projData = await res.json();
+    const projects = Array.isArray(projData) ? projData : (projData.results || projData.projects || []);
 
     // Fetch all sections
     const secRes = await fetch('https://todoist-proxy.hp-qrate.workers.dev/api/v1/sections', {
       headers:{ 'Authorization':'Bearer '+tok }
     });
     if (secRes.ok) {
-      const sections = await secRes.json();
-      // Build map: { projectId: { sectionName: sectionId } }
+      const secData = await secRes.json();
+      const sections = Array.isArray(secData) ? secData : (secData.results || secData.sections || []);
       const sectionMap = {};
       sections.forEach(s => {
         if (!sectionMap[s.project_id]) sectionMap[s.project_id] = {};
