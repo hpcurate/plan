@@ -425,27 +425,45 @@ function renderHome() {
   }
 }
 
+function resolveColor(raw) {
+  if (!raw) return '#4a4a4a';
+  if (raw.startsWith('#')) return raw; // v1 API returns hex directly
+  return TODOIST_COLORS[raw] || '#4a4a4a'; // v2 named colors fallback
+}
+
 function renderProjects() {
   const list = document.getElementById('proj-list');
   list.innerHTML = '';
   TASK_TYPES.forEach(tt => {
     const map = mappings[tt.key] || {};
-    const color = map.color ? (TODOIST_COLORS[map.color] || '#4a4a4a') : '#4a4a4a';
+    const color = resolveColor(map.color);
 
     const card = document.createElement('div');
     card.className = 'proj-card';
-    card.id = 'proj-'+tt.key;
+    card.id = 'proj-' + tt.key;
     card.style.setProperty('--proj-color', color);
 
-    card.innerHTML = `
-      <div class="proj-header" onclick="toggleProj('${tt.key}')">
-        <div class="proj-dot"></div>
-        <div class="proj-name">${tt.label}</div>
-        <div class="proj-arrow">›</div>
-      </div>
-      <div class="proj-subs">
-        ${tt.subs.map(s=>`<button class="sub-btn" onclick="openForm('${tt.key}','${s.display.replace(/'/g,"\\'")}','${s.section.replace(/'/g,"\\'")}',event)">${s.display}</button>`).join('')}
-      </div>`;
+    const header = document.createElement('div');
+    header.className = 'proj-header';
+    header.innerHTML = `<div class="proj-dot"></div><div class="proj-name">${tt.label}</div><div class="proj-arrow">›</div>`;
+    header.addEventListener('click', () => toggleProj(tt.key));
+
+    const subs = document.createElement('div');
+    subs.className = 'proj-subs';
+
+    tt.subs.forEach(s => {
+      const btn = document.createElement('button');
+      btn.className = 'sub-btn';
+      btn.textContent = s.display;
+      btn.addEventListener('click', e => {
+        e.stopPropagation();
+        openForm(tt.key, s.display, s.section);
+      });
+      subs.appendChild(btn);
+    });
+
+    card.appendChild(header);
+    card.appendChild(subs);
     list.appendChild(card);
   });
 }
@@ -476,7 +494,7 @@ function renderQueue() {
 
   list.innerHTML = queue.map((t,i) => {
     const map = mappings[t.typeKey] || {};
-    const color = map.color ? (TODOIST_COLORS[map.color] || '#4a4a4a') : '#4a4a4a';
+    const color = resolveColor(map.color);
     const pills = [
       t.subType,
       t.block ? `@${t.block}` : null,
@@ -503,11 +521,10 @@ function removeFromQueue(i) { queue.splice(i,1); saveQueue(); renderQueue(); }
 function clearQueue() { if(!confirm('Clear all queued tasks?')) return; queue=[]; saveQueue(); renderQueue(); toast('Queue cleared'); }
 
 // ── Form ──────────────────────────────────────────────────────────────────────
-function openForm(typeKey, display, section, e) {
-  e.stopPropagation();
+function openForm(typeKey, display, section) {
   const tt = TASK_TYPES.find(t=>t.key===typeKey);
   const map = mappings[typeKey] || {};
-  const color = map.color ? (TODOIST_COLORS[map.color] || '#4a4a4a') : '#4a4a4a';
+  const color = resolveColor(map.color);
 
   formState = { typeKey, subType:display, section, block:null, time:null, priority:2, subtasks:[], hasSub:false };
 
@@ -818,7 +835,7 @@ function saveMappings() {
     const pid = sel.value;
     if (!pid) { mappings[tt.key] = {}; return; }
     const proj = todoistProjects.find(p=>p.id===pid);
-    mappings[tt.key] = { projectId:pid, color:proj?.color||'no_color', name:proj?.name||'' };
+    mappings[tt.key] = { projectId:pid, color:proj?.color||'', name:proj?.name||'' };
   });
   saveMappingsStore();
   toast('Mapping saved');
