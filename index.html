@@ -751,6 +751,9 @@ async function connectTodoist() {
     const res = await fetch('https://api.todoist.com/rest/v2/projects', {
       headers:{ 'Authorization':'Bearer '+tok }
     });
+
+    if (res.status === 401) throw new Error('invalid token — check and paste again');
+    if (res.status === 403) throw new Error('forbidden — token may lack permissions');
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const projects = await res.json();
 
@@ -777,7 +780,10 @@ async function connectTodoist() {
     toast('Connected — map your projects');
   } catch(err) {
     const el = document.getElementById('conn-status');
-    el.className='settings-status err'; el.textContent='failed: '+err.message;
+    el.className='settings-status err';
+    el.textContent = err.message.includes('fetch')
+      ? 'network error — check your connection or try Safari if using another browser'
+      : 'error: '+err.message;
   } finally {
     btn.textContent='connect & fetch projects'; btn.disabled=false;
   }
