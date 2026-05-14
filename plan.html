@@ -1,0 +1,837 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="PLAN">
+  <meta name="theme-color" content="#0e0e0e">
+  <title>PLAN</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg:#0e0e0e; --s1:#161616; --s2:#1e1e1e; --bd:#272727;
+      --y:#A78BFA; --yd:rgba(167,139,250,.13);
+      --tx:#dedede; --mu:#4a4a4a;
+      --gr:#5cdb7d; --re:#e06060;
+      --mono:'Space Mono','Courier New',monospace;
+      --head:'Syne',sans-serif;
+    }
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+    body{background:var(--bg);color:var(--tx);font-family:var(--mono);font-size:14px;min-height:100dvh;overscroll-behavior:none}
+
+    /* ── Screens ── */
+    .scr{display:none;min-height:100dvh;padding-bottom:calc(52px + env(safe-area-inset-bottom))}
+    .scr.on{display:block}
+    #s-home{padding-top:env(safe-area-inset-top)}
+    .hd{position:sticky;top:0;background:var(--bg);border-bottom:1px solid var(--bd);
+        padding:calc(14px + env(safe-area-inset-top)) 18px 14px;
+        display:flex;align-items:center;gap:14px;z-index:10}
+    .hd-back{background:none;border:none;color:var(--y);font:400 12px/1 var(--mono);cursor:pointer;letter-spacing:.06em;padding:4px 0}
+    .hd-title{font:800 15px/1 var(--head);letter-spacing:.1em;text-transform:uppercase;flex:1}
+    .hd-action{background:none;border:none;color:var(--mu);font:400 11px/1 var(--mono);cursor:pointer;letter-spacing:.06em;padding:4px 0;transition:color .12s}
+    .hd-action:active{color:var(--y)}
+
+    /* ── Home header ── */
+    .h-top{padding:calc(env(safe-area-inset-top) + 28px) 18px 0}
+    .h-label{font:700 10px/1 var(--head);letter-spacing:.16em;text-transform:uppercase;color:var(--mu);margin-bottom:10px}
+    .h-logo{font:800 54px/1 var(--head);letter-spacing:-.02em;margin-bottom:28px}
+    .h-logo em{color:var(--y);font-style:normal}
+
+    /* ── Content ── */
+    .cnt{padding:18px}
+    .f{margin-bottom:17px}
+    .lbl{display:block;font:400 9px/1 var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--mu);margin-bottom:7px}
+    input[type=text],input[type=password],textarea{
+      width:100%;background:var(--s1);border:1px solid var(--bd);border-radius:3px;
+      color:var(--tx);font:400 15px/1 var(--mono);padding:12px 13px;outline:none;
+      -webkit-appearance:none;transition:border-color .12s}
+    input:focus,textarea:focus{border-color:var(--y)}
+    textarea{resize:none;line-height:1.65;min-height:72px}
+
+    /* ── Project type cards ── */
+    .projects{padding:0 18px}
+    .proj-card{background:var(--s1);border:1px solid var(--bd);border-radius:4px;margin-bottom:8px;overflow:hidden;transition:border-color .15s}
+    .proj-card.open{border-color:var(--proj-color,var(--y))}
+    .proj-header{display:flex;align-items:center;gap:12px;padding:16px 15px;cursor:pointer;user-select:none}
+    .proj-header:active{background:var(--s2)}
+    .proj-dot{width:8px;height:8px;border-radius:50%;background:var(--proj-color,var(--mu));flex-shrink:0;transition:background .15s}
+    .proj-name{font:700 13px/1 var(--head);letter-spacing:.08em;text-transform:uppercase;flex:1}
+    .proj-arrow{font:400 11px/1 var(--mono);color:var(--mu);transition:transform .15s}
+    .proj-card.open .proj-arrow{transform:rotate(90deg);color:var(--proj-color,var(--y))}
+    .proj-subs{display:none;padding:0 15px 14px;gap:6px;flex-wrap:wrap}
+    .proj-card.open .proj-subs{display:flex}
+    .sub-btn{background:var(--s2);border:1px solid var(--bd);border-radius:3px;
+             color:var(--mu);font:400 11px/1 var(--mono);letter-spacing:.06em;
+             padding:10px 13px;cursor:pointer;transition:all .1s;white-space:nowrap}
+    .sub-btn:active{background:var(--yd);border-color:var(--y);color:var(--y)}
+
+    /* ── Options (scale buttons) ── */
+    .opts{display:flex;flex-wrap:wrap;gap:5px}
+    .opt-b{background:var(--s1);border:1px solid var(--bd);border-radius:3px;
+           color:var(--mu);font:400 12px/1 var(--mono);letter-spacing:.05em;
+           padding:11px 12px;cursor:pointer;transition:all .1s;flex:1;text-align:center;min-width:0;white-space:nowrap}
+    .opt-b.on{background:var(--yd);border-color:var(--y);color:var(--y)}
+    .opt-b.none-opt{flex:0 0 auto}
+
+    /* ── Priority buttons ── */
+    .prio-row{display:grid;grid-template-columns:repeat(3,1fr);gap:5px}
+    .prio-b{background:var(--s1);border:1px solid var(--bd);border-radius:3px;
+            color:var(--mu);font:400 11px/1 var(--mono);letter-spacing:.05em;
+            padding:12px 6px;cursor:pointer;text-align:center;transition:all .1s}
+    .prio-b.on.p1{background:rgba(224,96,96,.12);border-color:var(--re);color:var(--re)}
+    .prio-b.on.p2{background:rgba(255,154,20,.12);border-color:#ff9a14;color:#ff9a14}
+    .prio-b.on.p3{background:rgba(92,219,125,.12);border-color:var(--gr);color:var(--gr)}
+    .prio-label{font:400 7px/1 var(--mono);letter-spacing:.1em;text-transform:uppercase;margin-top:4px;opacity:.7}
+
+    /* ── Toggle (subtasks) ── */
+    .tg2{display:grid;grid-template-columns:1fr 1fr;gap:5px}
+    .tg2-b{background:var(--s1);border:1px solid var(--bd);border-radius:3px;
+           color:var(--mu);font:400 12px/1 var(--mono);letter-spacing:.08em;
+           padding:12px;cursor:pointer;text-align:center;transition:all .1s}
+    .tg2-b.on{background:var(--yd);border-color:var(--y);color:var(--y)}
+
+    /* ── Subtask input ── */
+    .st-row{display:grid;grid-template-columns:1fr auto;gap:6px;margin-bottom:6px}
+    .st-add{background:var(--y);border:none;border-radius:3px;color:#0e0e0e;
+            font:700 11px/1 var(--mono);letter-spacing:.06em;padding:12px 14px;cursor:pointer;white-space:nowrap}
+    .st-add:active{opacity:.82}
+    .st-list{display:flex;flex-direction:column;gap:5px;margin-top:4px}
+    .st-item{background:var(--s1);border:1px solid var(--bd);border-radius:3px;
+             padding:9px 12px;display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center}
+    .st-item-txt{font:400 12px/1 var(--mono);color:var(--tx)}
+    .st-del{background:none;border:none;color:var(--mu);font:400 13px/1 var(--mono);cursor:pointer;padding:2px}
+    .st-del:active{color:var(--re)}
+
+    /* ── Form context banner ── */
+    .form-ctx{background:var(--s1);border:1px solid var(--bd);border-radius:3px;
+              padding:10px 13px;margin-bottom:20px;display:flex;align-items:center;gap:8px}
+    .form-ctx-dot{width:7px;height:7px;border-radius:50%;background:var(--proj-color,var(--mu));flex-shrink:0}
+    .form-ctx-txt{font:400 10px/1 var(--mono);letter-spacing:.08em;color:var(--mu)}
+    .form-ctx-txt em{color:var(--tx);font-style:normal}
+
+    /* ── Buttons ── */
+    .btn{width:100%;background:var(--y);border:none;border-radius:3px;color:#0e0e0e;
+         font:700 14px/1 var(--head);letter-spacing:.1em;text-transform:uppercase;
+         padding:15px;cursor:pointer;margin-top:6px;transition:opacity .15s}
+    .btn:active{opacity:.82}
+    .btn-ghost{background:var(--s2);border:1px solid var(--bd);color:var(--tx);
+               font:400 11px/1 var(--mono);letter-spacing:.06em}
+
+    /* ── Queue ── */
+    .queue-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+    .queue-title{font:700 10px/1 var(--head);letter-spacing:.15em;text-transform:uppercase;color:var(--y)}
+    .queue-clear{background:none;border:none;color:var(--mu);font:400 9px/1 var(--mono);letter-spacing:.08em;cursor:pointer;padding:2px 0}
+    .queue-clear:active{color:var(--re)}
+    .q-item{background:var(--s1);border:1px solid var(--bd);border-radius:3px;
+            padding:11px 13px;margin-bottom:6px;display:grid;grid-template-columns:1fr auto;gap:10px;align-items:start}
+    .q-item-body{min-width:0}
+    .q-item-name{font:400 13px/1.4 var(--mono);color:var(--tx);margin-bottom:5px;word-break:break-word}
+    .q-item-meta{display:flex;gap:5px;flex-wrap:wrap}
+    .q-pill{font:400 8px/1 var(--mono);letter-spacing:.08em;background:var(--s2);
+            border-radius:2px;padding:3px 6px;color:var(--mu);white-space:nowrap}
+    .q-pill.hl{color:var(--y)}
+    .q-del{background:none;border:none;color:var(--mu);font:400 13px/1 var(--mono);cursor:pointer;padding:2px 0 2px 4px;flex-shrink:0}
+    .q-del:active{color:var(--re)}
+    .queue-empty{color:var(--mu);font:400 11px/1.6 var(--mono);text-align:center;padding:30px 0}
+
+    /* ── Send button ── */
+    .send-wrap{position:sticky;bottom:calc(env(safe-area-inset-bottom) + 12px);padding:0 18px;margin-top:4px}
+    .btn-send{width:100%;background:var(--y);border:none;border-radius:3px;color:#0e0e0e;
+              font:700 15px/1 var(--head);letter-spacing:.1em;text-transform:uppercase;
+              padding:16px;cursor:pointer;transition:opacity .15s;
+              box-shadow:0 4px 24px rgba(167,139,250,.25)}
+    .btn-send:active{opacity:.82}
+    .btn-send:disabled{opacity:.3;cursor:not-allowed}
+
+    /* ── Settings ── */
+    .settings-status{font:400 10px/1.5 var(--mono);letter-spacing:.06em;padding:10px 13px;border-radius:3px;margin-bottom:14px}
+    .settings-status.ok{background:rgba(92,219,125,.08);border:1px solid rgba(92,219,125,.25);color:var(--gr)}
+    .settings-status.err{background:rgba(224,96,96,.08);border:1px solid rgba(224,96,96,.25);color:var(--re)}
+    .settings-status.idle{background:var(--s1);border:1px solid var(--bd);color:var(--mu)}
+    .map-row{background:var(--s1);border:1px solid var(--bd);border-radius:3px;
+             padding:12px 13px;margin-bottom:6px;display:grid;grid-template-columns:auto 1fr;gap:12px;align-items:center}
+    .map-key{font:700 11px/1 var(--head);letter-spacing:.08em;text-transform:uppercase;color:var(--tx);min-width:70px}
+    .map-val{font:400 10px/1 var(--mono);color:var(--mu);letter-spacing:.06em;text-overflow:ellipsis;overflow:hidden;white-space:nowrap}
+    .map-val.set{color:var(--y)}
+    select{width:100%;background:var(--s1);border:1px solid var(--bd);border-radius:3px;
+           color:var(--tx);font:400 13px/1 var(--mono);padding:11px 12px;outline:none;
+           -webkit-appearance:none;cursor:pointer}
+    select:focus{border-color:var(--y)}
+    .sec{font:700 10px/1 var(--head);letter-spacing:.15em;text-transform:uppercase;color:var(--y);
+         margin:20px 0 12px;padding-bottom:8px;border-bottom:1px solid var(--bd)}
+    hr{border:none;border-top:1px solid var(--bd);margin:6px 0 18px}
+
+    /* ── Sending state ── */
+    .send-log{background:var(--s1);border:1px solid var(--bd);border-radius:3px;
+              padding:13px;font:400 11px/1.8 var(--mono);color:var(--mu);
+              max-height:240px;overflow-y:auto;margin-bottom:14px}
+    .send-log .ok{color:var(--gr)}
+    .send-log .err{color:var(--re)}
+    .send-log .pending{color:var(--mu)}
+
+    /* ── Toast ── */
+    .toast{position:fixed;bottom:calc(24px + env(safe-area-inset-bottom));left:50%;
+           transform:translateX(-50%) translateY(120px);background:var(--y);color:#0e0e0e;
+           font:700 11px/1 var(--mono);letter-spacing:.08em;padding:9px 18px;border-radius:3px;
+           transition:transform .18s ease;z-index:99;pointer-events:none;white-space:nowrap}
+    .toast.show{transform:translateX(-50%) translateY(0)}
+
+    /* ── Misc ── */
+    .hidden{display:none!important}
+  </style>
+</head>
+<body>
+
+<!-- ═══ HOME ════════════════════════════════════════════════════════════════ -->
+<div id="s-home" class="scr on">
+  <div class="h-top">
+    <div class="h-label" id="home-date">—</div>
+    <div class="h-logo">PLAN<em>.</em></div>
+  </div>
+
+  <div class="projects" id="proj-list"></div>
+
+  <div style="padding:0 18px;margin-top:4px">
+    <div id="queue-section" class="hidden">
+      <div class="queue-header">
+        <span class="queue-title" id="queue-title">queue</span>
+        <button class="queue-clear" onclick="clearQueue()">clear all</button>
+      </div>
+      <div id="queue-list"></div>
+    </div>
+    <div id="queue-empty-msg" class="queue-empty">no tasks queued yet<br>tap a project to start</div>
+  </div>
+
+  <div class="send-wrap">
+    <button class="btn-send" id="btn-send" onclick="go('sending')" disabled>send to todoist</button>
+  </div>
+</div>
+
+<!-- ═══ FORM ════════════════════════════════════════════════════════════════ -->
+<div id="s-form" class="scr">
+  <div class="hd">
+    <button class="hd-back" onclick="go('home')">← back</button>
+    <span class="hd-title">new task</span>
+  </div>
+  <div class="cnt">
+    <div class="form-ctx" id="form-ctx">
+      <div class="form-ctx-dot" id="form-dot"></div>
+      <div class="form-ctx-txt" id="form-ctx-txt"></div>
+    </div>
+
+    <div class="f"><label class="lbl">Task name</label><input type="text" id="task-name" placeholder="describe the task…"></div>
+
+    <div class="f">
+      <label class="lbl">Block</label>
+      <div class="opts" id="opts-block">
+        <button class="opt-b" onclick="optPick(this,'block','b1')">b1</button>
+        <button class="opt-b" onclick="optPick(this,'block','b2')">b2</button>
+        <button class="opt-b" onclick="optPick(this,'block','b3')">b3</button>
+        <button class="opt-b none-opt on" onclick="optPick(this,'block',null)">none</button>
+      </div>
+    </div>
+
+    <div class="f">
+      <label class="lbl">Time</label>
+      <div class="opts" id="opts-time" style="gap:5px">
+        <button class="opt-b" onclick="optPick(this,'time','2min')">2m</button>
+        <button class="opt-b" onclick="optPick(this,'time','5min')">5m</button>
+        <button class="opt-b" onclick="optPick(this,'time','15min')">15m</button>
+        <button class="opt-b" onclick="optPick(this,'time','30min')">30m</button>
+        <button class="opt-b" onclick="optPick(this,'time','45min')">45m</button>
+        <button class="opt-b" onclick="optPick(this,'time','60min')">60m</button>
+        <button class="opt-b" onclick="optPick(this,'time','120min')">2h</button>
+        <button class="opt-b none-opt on" onclick="optPick(this,'time',null)">none</button>
+      </div>
+    </div>
+
+    <div class="f">
+      <label class="lbl">Priority</label>
+      <div class="prio-row">
+        <button class="prio-b p1" onclick="prioPick(this,4)">
+          <div>urgent</div><div class="prio-label">p1</div>
+        </button>
+        <button class="prio-b p2" onclick="prioPick(this,3)">
+          <div>mandatory</div><div class="prio-label">p2</div>
+        </button>
+        <button class="prio-b p3 on" onclick="prioPick(this,2)">
+          <div>optional</div><div class="prio-label">p3</div>
+        </button>
+      </div>
+    </div>
+
+    <div class="f">
+      <label class="lbl">Subtasks</label>
+      <div class="tg2" id="tg-sub">
+        <button class="tg2-b" onclick="setSub(true)">yes</button>
+        <button class="tg2-b on" onclick="setSub(false)">no</button>
+      </div>
+    </div>
+
+    <div id="sub-input" class="hidden">
+      <div class="f" style="margin-top:10px">
+        <label class="lbl">Add subtask</label>
+        <div class="st-row">
+          <input type="text" id="sub-text" placeholder="subtask…">
+          <button class="st-add" onclick="addSubtask()">+ add</button>
+        </div>
+        <div class="st-list" id="st-list"></div>
+      </div>
+    </div>
+
+    <button class="btn" onclick="addToQueue()">+ add to queue</button>
+    <button class="btn btn-ghost" onclick="go('home')" style="margin-top:8px">cancel</button>
+  </div>
+</div>
+
+<!-- ═══ SENDING ════════════════════════════════════════════════════════════ -->
+<div id="s-sending" class="scr">
+  <div class="hd">
+    <button class="hd-back" id="send-back" onclick="go('home')">← back</button>
+    <span class="hd-title" id="send-title">sending…</span>
+  </div>
+  <div class="cnt">
+    <div class="send-log" id="send-log"></div>
+    <button class="btn hidden" id="send-done-btn" onclick="go('home')">done</button>
+  </div>
+</div>
+
+<!-- ═══ SETTINGS ═══════════════════════════════════════════════════════════ -->
+<div id="s-settings" class="scr">
+  <div class="hd">
+    <button class="hd-back" onclick="go('home')">← back</button>
+    <span class="hd-title">Settings</span>
+  </div>
+  <div class="cnt">
+    <div class="sec">API</div>
+    <div id="conn-status" class="settings-status idle">not connected</div>
+    <div class="f">
+      <label class="lbl">Todoist API token</label>
+      <input type="password" id="api-token-input" placeholder="paste token here…">
+    </div>
+    <button class="btn" onclick="connectTodoist()" id="btn-connect">connect & fetch projects</button>
+
+    <div class="sec" id="map-sec" style="display:none">Project mapping</div>
+    <div id="map-rows" style="display:none"></div>
+    <button class="btn hidden" id="btn-save-map" onclick="saveMappings()">save mapping</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ── Task types ────────────────────────────────────────────────────────────────
+const TASK_TYPES = [
+  { key:'curate', label:'curate', pLabel:'curate',
+    subs:[
+      { display:'mixing',    section:'mixing' },
+      { display:'production',section:'production' },
+      { display:'socials',   section:'socials' },
+    ]},
+  { key:'alive',  label:'alive',  pLabel:'alive',
+    subs:[
+      { display:'kamo',       section:'kamo' },
+      { display:'activities', section:'activities' },
+      { display:'create',     section:'create' },
+      { display:'music',      section:'music' },
+      { display:'social',     section:'social' },
+      { display:'movie | show',section:'movie | show' },
+      { display:'raves',      section:'raves' },
+      { display:'trip',       section:'trip' },
+    ]},
+  { key:'admin',  label:'admin',  pLabel:'admin',
+    subs:[
+      { display:'tasks', section:'admin | tasks' },
+      { display:'rdv',   section:'admin | rdv' },
+      { display:'calls', section:'admin | calls' },
+    ]},
+  { key:'system', label:'system', pLabel:'system',
+    subs:[
+      { display:'update',   section:'system | update' },
+      { display:'projects', section:'system | projects' },
+    ]},
+  { key:'home',   label:'home',   pLabel:'home',
+    subs:[
+      { display:'food',      section:'home | food' },
+      { display:'projects',  section:'home | projects' },
+      { display:'chores',    section:'home | chores' },
+      { display:'groceries', section:'home | groceries' },
+    ]},
+  { key:'edu',    label:'edu',    pLabel:'edu',
+    subs:[
+      { display:'study',    section:'study' },
+      { display:'practice', section:'practice' },
+      { display:'exam',     section:'exam' },
+      { display:'rdv',      section:'rdv' },
+    ]},
+];
+
+const TODOIST_COLORS = {
+  berry:'#b8255f', blue:'#4073ff', charcoal:'#808080',
+  coral:'#ff8d85', forest_green:'#299438', grape:'#884dff',
+  grey:'#808080', lavender:'#a8a8e8', lime_green:'#65d122',
+  magenta:'#e05194', mint_green:'#6fcfad', olive:'#a8b400',
+  orange:'#ff9a14', red:'#db4035', sky_blue:'#14aaf5',
+  salmon:'#ff8d85', taupe:'#a29b93', teal:'#158fad',
+  violet:'#7c4dff', yellow:'#fad000', no_color:'#4a4a4a',
+};
+
+// ── State ─────────────────────────────────────────────────────────────────────
+let queue = [];
+let formState = { typeKey:null, subType:null, block:null, time:null, priority:2, subtasks:[], hasSub:false };
+let todoistProjects = [];
+let mappings = {}; // { curate: {projectId, color}, school: {projectId, color}, ... }
+
+function loadState() {
+  try { queue = JSON.parse(localStorage.getItem('plan_queue') || '[]'); } catch { queue=[]; }
+  try { mappings = JSON.parse(localStorage.getItem('plan_mappings') || '{}'); } catch { mappings={}; }
+  try { todoistProjects = JSON.parse(localStorage.getItem('plan_projects') || '[]'); } catch { todoistProjects=[]; }
+}
+
+function saveQueue() { localStorage.setItem('plan_queue', JSON.stringify(queue)); }
+function saveMappingsStore() { localStorage.setItem('plan_mappings', JSON.stringify(mappings)); }
+function saveProjects() { localStorage.setItem('plan_projects', JSON.stringify(todoistProjects)); }
+function getToken() { return localStorage.getItem('plan_token') || ''; }
+function saveToken(t) { localStorage.setItem('plan_token', t); }
+
+// ── Navigation ────────────────────────────────────────────────────────────────
+function go(id) {
+  document.querySelectorAll('.scr').forEach(s=>s.classList.remove('on'));
+  document.getElementById('s-'+id).classList.add('on');
+  window.scrollTo(0,0);
+  if (id==='home')     renderHome();
+  if (id==='form')     renderForm();
+  if (id==='settings') renderSettings();
+  if (id==='sending')  startSending();
+}
+
+// ── Home ──────────────────────────────────────────────────────────────────────
+function renderHome() {
+  document.getElementById('home-date').textContent =
+    new Date().toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long',year:'numeric'}).toUpperCase();
+  renderProjects();
+  renderQueue();
+
+  // Settings gear — add to home header if not there
+  if (!document.getElementById('home-settings-btn')) {
+    const btn = document.createElement('button');
+    btn.id='home-settings-btn'; btn.className='hd-action';
+    btn.textContent='settings'; btn.onclick=()=>go('settings');
+    btn.style.cssText='position:absolute;top:calc(env(safe-area-inset-top) + 14px);right:18px;z-index:11';
+    document.getElementById('s-home').appendChild(btn);
+  }
+}
+
+function renderProjects() {
+  const list = document.getElementById('proj-list');
+  list.innerHTML = '';
+  TASK_TYPES.forEach(tt => {
+    const map = mappings[tt.key] || {};
+    const color = map.color ? (TODOIST_COLORS[map.color] || '#4a4a4a') : '#4a4a4a';
+
+    const card = document.createElement('div');
+    card.className = 'proj-card';
+    card.id = 'proj-'+tt.key;
+    card.style.setProperty('--proj-color', color);
+
+    card.innerHTML = `
+      <div class="proj-header" onclick="toggleProj('${tt.key}')">
+        <div class="proj-dot"></div>
+        <div class="proj-name">${tt.label}</div>
+        <div class="proj-arrow">›</div>
+      </div>
+      <div class="proj-subs">
+        ${tt.subs.map(s=>`<button class="sub-btn" onclick="openForm('${tt.key}','${s.display.replace(/'/g,"\\'")}','${s.section.replace(/'/g,"\\'")}',event)">${s.display}</button>`).join('')}
+      </div>`;
+    list.appendChild(card);
+  });
+}
+
+function toggleProj(key) {
+  const card = document.getElementById('proj-'+key);
+  const wasOpen = card.classList.contains('open');
+  document.querySelectorAll('.proj-card').forEach(c=>c.classList.remove('open'));
+  if (!wasOpen) card.classList.add('open');
+}
+
+// ── Queue ─────────────────────────────────────────────────────────────────────
+function renderQueue() {
+  const section = document.getElementById('queue-section');
+  const emptyMsg = document.getElementById('queue-empty-msg');
+  const list = document.getElementById('queue-list');
+  const sendBtn = document.getElementById('btn-send');
+  const n = queue.length;
+
+  if (!n) {
+    section.classList.add('hidden'); emptyMsg.classList.remove('hidden');
+    sendBtn.disabled = true; return;
+  }
+  section.classList.remove('hidden'); emptyMsg.classList.add('hidden');
+  sendBtn.disabled = false;
+  document.getElementById('queue-title').textContent = `queue (${n})`;
+  sendBtn.textContent = `send ${n} task${n!==1?'s':''} to todoist`;
+
+  list.innerHTML = queue.map((t,i) => {
+    const map = mappings[t.typeKey] || {};
+    const color = map.color ? (TODOIST_COLORS[map.color] || '#4a4a4a') : '#4a4a4a';
+    const pills = [
+      t.subType,
+      t.block ? `@${t.block}` : null,
+      t.time ? `@${t.time}` : null,
+      ['','urgent','mandatory','optional'][t.priority] || null,
+    ].filter(Boolean);
+
+    const stLine = t.subtasks?.length ? `<div class="q-pill">${t.subtasks.length} subtask${t.subtasks.length!==1?'s':''}</div>` : '';
+    return `<div class="q-item">
+      <div class="q-item-body">
+        <div class="q-item-name">${esc(t.name)}</div>
+        <div class="q-item-meta">
+          <div class="q-pill hl" style="color:${color}">${t.typeKey}</div>
+          ${pills.map(p=>`<div class="q-pill">${esc(p)}</div>`).join('')}
+          ${stLine}
+        </div>
+      </div>
+      <button class="q-del" onclick="removeFromQueue(${i})">✕</button>
+    </div>`;
+  }).join('');
+}
+
+function removeFromQueue(i) { queue.splice(i,1); saveQueue(); renderQueue(); }
+function clearQueue() { if(!confirm('Clear all queued tasks?')) return; queue=[]; saveQueue(); renderQueue(); toast('Queue cleared'); }
+
+// ── Form ──────────────────────────────────────────────────────────────────────
+function openForm(typeKey, display, section, e) {
+  e.stopPropagation();
+  const tt = TASK_TYPES.find(t=>t.key===typeKey);
+  const map = mappings[typeKey] || {};
+  const color = map.color ? (TODOIST_COLORS[map.color] || '#4a4a4a') : '#4a4a4a';
+
+  formState = { typeKey, subType:display, section, block:null, time:null, priority:2, subtasks:[], hasSub:false };
+
+  // Store color on form
+  document.getElementById('s-form').style.setProperty('--proj-color', color);
+  document.getElementById('form-dot').style.background = color;
+  document.getElementById('form-ctx-txt').innerHTML = `<em>${tt.label}</em> · ${subType}`;
+
+  go('form');
+}
+
+function renderForm() {
+  // Reset all opt buttons
+  resetOpts('opts-block', formState.block);
+  resetOpts('opts-time', formState.time);
+  // Priority default p3
+  document.querySelectorAll('.prio-b').forEach(b=>b.classList.remove('on'));
+  document.querySelectorAll('.prio-b')[2].classList.add('on'); // p3 = optional
+  formState.priority = 2;
+  // Subtasks off
+  setSub(false);
+  formState.subtasks = [];
+  renderSubtasks();
+  document.getElementById('task-name').value = '';
+  document.getElementById('sub-text').value = '';
+}
+
+function resetOpts(id, activeVal) {
+  const row = document.getElementById(id);
+  row.querySelectorAll('.opt-b').forEach(b=>{
+    const isNone = b.classList.contains('none-opt');
+    b.classList.toggle('on', isNone ? activeVal===null : b.textContent===activeVal);
+  });
+  // Default to none if nothing
+  if (activeVal === null) {
+    const noneBtn = row.querySelector('.none-opt');
+    if (noneBtn) noneBtn.classList.add('on');
+  }
+}
+
+function optPick(btn, field, val) {
+  const row = btn.parentElement;
+  row.querySelectorAll('.opt-b').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
+  formState[field] = val;
+}
+
+function prioPick(btn, val) {
+  document.querySelectorAll('.prio-b').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
+  formState.priority = val;
+}
+
+function setSub(on) {
+  formState.hasSub = on;
+  document.getElementById('tg-sub').querySelectorAll('.tg2-b').forEach((b,i)=>
+    b.classList.toggle('on', on ? i===0 : i===1));
+  document.getElementById('sub-input').classList.toggle('hidden', !on);
+}
+
+function addSubtask() {
+  const inp = document.getElementById('sub-text');
+  const txt = inp.value.trim(); if(!txt) return;
+  formState.subtasks.push(txt);
+  inp.value = '';
+  renderSubtasks();
+}
+
+function deleteSubtask(i) { formState.subtasks.splice(i,1); renderSubtasks(); }
+
+function renderSubtasks() {
+  const list = document.getElementById('st-list');
+  list.innerHTML = formState.subtasks.map((s,i)=>`
+    <div class="st-item">
+      <span class="st-item-txt">${esc(s)}</span>
+      <button class="st-del" onclick="deleteSubtask(${i})">✕</button>
+    </div>`).join('');
+}
+
+function addToQueue() {
+  const raw = document.getElementById('task-name').value.trim();
+  const tt = TASK_TYPES.find(t=>t.key===formState.typeKey);
+  const name = raw ? raw : formState.subType;
+  const map = mappings[formState.typeKey] || {};
+
+  if (!map.projectId) {
+    if (!confirm('No project mapped for '+formState.typeKey+'. Add anyway? It will go to inbox.')) return;
+  }
+
+  queue.push({
+    name,
+    typeKey:      formState.typeKey,
+    subType:      formState.subType,
+    section:      formState.section,
+    projectLabel: tt.pLabel,
+    projectId:    map.projectId || null,
+    block:        formState.block,
+    time:         formState.time,
+    priority:     formState.priority,
+    subtasks:     [...formState.subtasks],
+  });
+
+  saveQueue();
+  toast('Added to queue');
+  go('home');
+}
+
+// ── Sending ───────────────────────────────────────────────────────────────────
+async function startSending() {
+  const token = getToken();
+  if (!token) { toast('No API token'); go('settings'); return; }
+
+  const log = document.getElementById('send-log');
+  const backBtn = document.getElementById('send-back');
+  const doneBtn = document.getElementById('send-done-btn');
+  const title = document.getElementById('send-title');
+
+  log.innerHTML = ''; backBtn.disabled = true; doneBtn.classList.add('hidden');
+  title.textContent = 'sending…';
+
+  // Build section lookup: { projectId: { sectionName: sectionId } }
+  let sectionMap = {};
+  try { sectionMap = JSON.parse(localStorage.getItem('plan_sections') || '{}'); } catch {}
+
+  let success = 0, failed = 0;
+
+  for (const task of queue) {
+    const labels = [task.projectLabel, task.subType];
+    if (task.block) labels.push(task.block);
+    if (task.time) labels.push(task.time);
+
+    const body = {
+      content: task.name,
+      due_string: 'today',
+      priority: task.priority,
+      labels,
+    };
+    if (task.projectId) body.project_id = task.projectId;
+
+    // Resolve section_id
+    if (task.projectId && task.section) {
+      const sid = sectionMap[task.projectId]?.[task.section];
+      if (sid) body.section_id = sid;
+    }
+
+    log.innerHTML += `<div class="pending">→ ${esc(task.name)}</div>`;
+    log.scrollTop = log.scrollHeight;
+
+    try {
+      const res = await fetch('https://api.todoist.com/rest/v2/tasks', {
+        method:'POST',
+        headers:{ 'Authorization':'Bearer '+token, 'Content-Type':'application/json' },
+        body: JSON.stringify(body),
+      });
+
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const created = await res.json();
+      success++;
+
+      // Subtasks
+      for (const st of (task.subtasks || [])) {
+        const stBody = {
+          content: st, parent_id: created.id,
+          due_string: 'today', priority: task.priority,
+        };
+        const sr = await fetch('https://api.todoist.com/rest/v2/tasks', {
+          method:'POST',
+          headers:{ 'Authorization':'Bearer '+token, 'Content-Type':'application/json' },
+          body: JSON.stringify(stBody),
+        });
+        if (!sr.ok) logLine(log, `  ↳ subtask failed: ${st}`, 'err');
+        else logLine(log, `  ↳ ${esc(st)}`, 'ok');
+      }
+
+      // Replace last pending line with ok
+      const lines = log.querySelectorAll('.pending');
+      if (lines.length) { const last=lines[lines.length-1]; last.className='ok'; last.textContent='✓ '+esc(task.name); }
+
+    } catch (err) {
+      failed++;
+      const lines = log.querySelectorAll('.pending');
+      if (lines.length) { const last=lines[lines.length-1]; last.className='err'; last.textContent='✗ '+esc(task.name)+' ('+err.message+')'; }
+    }
+
+    await sleep(100); // small delay to avoid rate limiting
+  }
+
+  // Summary
+  log.innerHTML += `<div style="margin-top:8px;color:${failed?'var(--re)':'var(--gr)'}">${success} sent${failed?', '+failed+' failed':''}</div>`;
+  log.scrollTop = log.scrollHeight;
+  title.textContent = failed ? 'done with errors' : 'done';
+  backBtn.disabled = false;
+  doneBtn.classList.remove('hidden');
+
+  if (!failed) {
+    queue = []; saveQueue();
+  }
+}
+
+function logLine(container, text, cls) {
+  const div = document.createElement('div');
+  div.className = cls; div.textContent = text;
+  container.appendChild(div);
+  container.scrollTop = container.scrollHeight;
+}
+
+const sleep = ms => new Promise(r=>setTimeout(r,ms));
+
+// ── Settings ──────────────────────────────────────────────────────────────────
+function renderSettings() {
+  const tok = getToken();
+  document.getElementById('api-token-input').value = tok ? '••••••••••••••••' : '';
+  updateConnStatus();
+  if (todoistProjects.length) renderMappingRows();
+}
+
+function updateConnStatus() {
+  const el = document.getElementById('conn-status');
+  const tok = getToken();
+  if (!tok) { el.className='settings-status idle'; el.textContent='not connected'; return; }
+  if (todoistProjects.length) {
+    el.className='settings-status ok';
+    el.textContent=`connected · ${todoistProjects.length} projects loaded`;
+  } else {
+    el.className='settings-status idle'; el.textContent='token set · tap connect to fetch projects';
+  }
+}
+
+async function connectTodoist() {
+  const inp = document.getElementById('api-token-input');
+  let tok = inp.value.trim();
+  if (!tok || tok.startsWith('•')) {
+    tok = getToken(); // already set, just refetch
+    if (!tok) { toast('Paste your API token first'); return; }
+  }
+
+  const btn = document.getElementById('btn-connect');
+  btn.textContent = 'fetching…'; btn.disabled = true;
+
+  try {
+    const res = await fetch('https://api.todoist.com/rest/v2/projects', {
+      headers:{ 'Authorization':'Bearer '+tok }
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const projects = await res.json();
+
+    // Fetch all sections
+    const secRes = await fetch('https://api.todoist.com/rest/v2/sections', {
+      headers:{ 'Authorization':'Bearer '+tok }
+    });
+    if (secRes.ok) {
+      const sections = await secRes.json();
+      // Build map: { projectId: { sectionName: sectionId } }
+      const sectionMap = {};
+      sections.forEach(s => {
+        if (!sectionMap[s.project_id]) sectionMap[s.project_id] = {};
+        sectionMap[s.project_id][s.name] = s.id;
+      });
+      localStorage.setItem('plan_sections', JSON.stringify(sectionMap));
+    }
+
+    saveToken(tok);
+    todoistProjects = projects;
+    saveProjects();
+    updateConnStatus();
+    renderMappingRows();
+    toast('Connected — map your projects');
+  } catch(err) {
+    const el = document.getElementById('conn-status');
+    el.className='settings-status err'; el.textContent='failed: '+err.message;
+  } finally {
+    btn.textContent='connect & fetch projects'; btn.disabled=false;
+  }
+}
+
+function renderMappingRows() {
+  const sec = document.getElementById('map-sec');
+  const rows = document.getElementById('map-rows');
+  const saveBtn = document.getElementById('btn-save-map');
+  sec.style.display='block'; rows.style.display='block'; saveBtn.classList.remove('hidden');
+
+  rows.innerHTML = TASK_TYPES.map(tt => {
+    const current = mappings[tt.key]?.projectId || '';
+    const opts = todoistProjects.map(p=>
+      `<option value="${p.id}" ${p.id===current?'selected':''}>${p.name}</option>`
+    ).join('');
+    return `<div class="f">
+      <label class="lbl">${tt.label}</label>
+      <select id="map-${tt.key}">
+        <option value="">— not mapped —</option>
+        ${opts}
+      </select>
+    </div>`;
+  }).join('');
+}
+
+function saveMappings() {
+  TASK_TYPES.forEach(tt => {
+    const sel = document.getElementById('map-'+tt.key);
+    if (!sel) return;
+    const pid = sel.value;
+    if (!pid) { mappings[tt.key] = {}; return; }
+    const proj = todoistProjects.find(p=>p.id===pid);
+    mappings[tt.key] = { projectId:pid, color:proj?.color||'no_color', name:proj?.name||'' };
+  });
+  saveMappingsStore();
+  toast('Mapping saved');
+  renderProjects(); // refresh colors on home
+}
+
+// ── Utils ─────────────────────────────────────────────────────────────────────
+function esc(s) {
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function toast(msg) {
+  const el=document.getElementById('toast');
+  el.textContent=msg; el.classList.add('show');
+  setTimeout(()=>el.classList.remove('show'),1800);
+}
+
+// ── Boot ──────────────────────────────────────────────────────────────────────
+loadState();
+renderHome();
+</script>
+</body>
+</html>
