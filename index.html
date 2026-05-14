@@ -524,18 +524,23 @@ function clearQueue() { if(!confirm('Clear all queued tasks?')) return; queue=[]
 
 // ── Form ──────────────────────────────────────────────────────────────────────
 function openForm(typeKey, display, section) {
-  const tt = TASK_TYPES.find(t=>t.key===typeKey);
-  const map = mappings[typeKey] || {};
-  const color = resolveColor(map.color);
+  try {
+    const tt = TASK_TYPES.find(t => t.key === typeKey);
+    if (!tt) { toast('Unknown project: ' + typeKey); return; }
+    const map = mappings[typeKey] || {};
+    const color = resolveColor(map.color);
 
-  formState = { typeKey, subType:display, section, block:null, time:null, priority:2, subtasks:[], hasSub:false };
+    formState = { typeKey, subType: display, section, block: null, time: null, priority: 2, subtasks: [], hasSub: false };
 
-  // Store color on form
-  document.getElementById('s-form').style.setProperty('--proj-color', color);
-  document.getElementById('form-dot').style.background = color;
-  document.getElementById('form-ctx-txt').innerHTML = `<em>${tt.label}</em> · ${subType}`;
+    document.getElementById('s-form').style.setProperty('--proj-color', color);
+    document.getElementById('form-dot').style.background = color;
+    document.getElementById('form-ctx-txt').innerHTML = `<em>${tt.label}</em> · ${display}`;
 
-  go('form');
+    go('form');
+  } catch(err) {
+    toast('Error: ' + err.message);
+    console.error(err);
+  }
 }
 
 function renderForm() {
