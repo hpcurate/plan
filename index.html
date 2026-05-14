@@ -61,8 +61,10 @@
     .proj-name{font:700 13px/1 var(--head);letter-spacing:.08em;text-transform:uppercase;flex:1}
     .proj-arrow{font:400 11px/1 var(--mono);color:var(--mu);transition:transform .15s}
     .proj-card.open .proj-arrow{transform:rotate(90deg);color:var(--proj-color,var(--y))}
-    .proj-subs{display:none;padding:0 15px 14px;gap:6px;flex-wrap:wrap}
-    .proj-card.open .proj-subs{display:flex}
+    .proj-subs{display:flex;flex-wrap:wrap;gap:6px;padding:0 15px;
+               max-height:0;overflow:hidden;opacity:0;pointer-events:none;
+               padding-bottom:0;transition:max-height .2s ease,opacity .15s ease,padding-bottom .2s ease}
+    .proj-card.open .proj-subs{max-height:300px;opacity:1;pointer-events:auto;padding-bottom:14px}
     .sub-btn{background:var(--s2);border:1px solid var(--bd);border-radius:3px;
              color:var(--mu);font:400 11px/1 var(--mono);letter-spacing:.06em;
              padding:10px 13px;cursor:pointer;transition:all .1s;white-space:nowrap}
