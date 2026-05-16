@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="PLAN">
@@ -319,6 +319,9 @@
     <div class="sec" id="map-sec" style="display:none">Project mapping</div>
     <div id="map-rows" style="display:none"></div>
     <button class="btn hidden" id="btn-save-map" onclick="saveMappings()">save mapping</button>
+
+    <div class="sec" style="margin-top:28px">App</div>
+    <button class="btn btn-ghost" onclick="window.location.reload()" style="margin-bottom:8px">reload page</button>
   </div>
 </div>
 
@@ -379,7 +382,7 @@ function resolveColor(typeKey) {
 let queue = [];
 let formState = { typeKey:null, subType:null, block:null, time:null, priority:2, subtasks:[], hasSub:false };
 let todoistProjects = [];
-let mappings = {}; // { curate: {projectId, color}, school: {projectId, color}, ... }
+let mappings = {};
 
 function loadState() {
   try { queue = JSON.parse(localStorage.getItem('plan_queue') || '[]'); } catch { queue=[]; }
@@ -411,7 +414,6 @@ function renderHome() {
   renderProjects();
   renderQueue();
 
-  // Settings gear — add to home header if not there
   if (!document.getElementById('home-settings-btn')) {
     const btn = document.createElement('button');
     btn.id='home-settings-btn'; btn.className='hd-action';
@@ -421,13 +423,11 @@ function renderHome() {
   }
 }
 
-
 function renderProjects() {
   const list = document.getElementById('proj-list');
   list.innerHTML = '';
   TASK_TYPES.forEach(tt => {
     const color = resolveColor(tt.key);
-
     const card = document.createElement('div');
     card.className = 'proj-card';
     card.id = 'proj-' + tt.key;
@@ -440,15 +440,11 @@ function renderProjects() {
 
     const subs = document.createElement('div');
     subs.className = 'proj-subs';
-
     tt.subs.forEach(s => {
       const btn = document.createElement('button');
       btn.className = 'sub-btn';
       btn.textContent = s.display;
-      btn.addEventListener('click', e => {
-        e.stopPropagation();
-        openForm(tt.key, s.display, s.section);
-      });
+      btn.addEventListener('click', e => { e.stopPropagation(); openForm(tt.key, s.display, s.section); });
       subs.appendChild(btn);
     });
 
@@ -484,13 +480,8 @@ function renderQueue() {
 
   list.innerHTML = queue.map((t,i) => {
     const color = resolveColor(t.typeKey);
-    const pills = [
-      t.subType,
-      t.block ? `@${t.block}` : null,
-      t.time ? `@${t.time}` : null,
-      ['','urgent','mandatory','optional'][t.priority] || null,
-    ].filter(Boolean);
-
+    const pills = [t.subType, t.block ? `@${t.block}` : null, t.time ? `@${t.time}` : null,
+      ['','urgent','mandatory','optional'][t.priority] || null].filter(Boolean);
     const stLine = t.subtasks?.length ? `<div class="q-pill">${t.subtasks.length} subtask${t.subtasks.length!==1?'s':''}</div>` : '';
     return `<div class="q-item">
       <div class="q-item-body">
@@ -515,29 +506,20 @@ function openForm(typeKey, display, section) {
     const tt = TASK_TYPES.find(t => t.key === typeKey);
     if (!tt) { toast('Unknown project: ' + typeKey); return; }
     const color = resolveColor(typeKey);
-
     formState = { typeKey, subType: display, section, block: null, time: null, priority: 2, subtasks: [], hasSub: false };
-
     document.getElementById('s-form').style.setProperty('--proj-color', color);
     document.getElementById('form-dot').style.background = color;
     document.getElementById('form-ctx-txt').innerHTML = `<em>${tt.label}</em> · ${display}`;
-
     go('form');
-  } catch(err) {
-    toast('Error: ' + err.message);
-    console.error(err);
-  }
+  } catch(err) { toast('Error: ' + err.message); console.error(err); }
 }
 
 function renderForm() {
-  // Reset all opt buttons
   resetOpts('opts-block', formState.block);
   resetOpts('opts-time', formState.time);
-  // Priority default p3
   document.querySelectorAll('.prio-b').forEach(b=>b.classList.remove('on'));
-  document.querySelectorAll('.prio-b')[2].classList.add('on'); // p3 = optional
+  document.querySelectorAll('.prio-b')[2].classList.add('on');
   formState.priority = 2;
-  // Subtasks off
   setSub(false);
   formState.subtasks = [];
   renderSubtasks();
@@ -551,11 +533,7 @@ function resetOpts(id, activeVal) {
     const isNone = b.classList.contains('none-opt');
     b.classList.toggle('on', isNone ? activeVal===null : b.textContent===activeVal);
   });
-  // Default to none if nothing
-  if (activeVal === null) {
-    const noneBtn = row.querySelector('.none-opt');
-    if (noneBtn) noneBtn.classList.add('on');
-  }
+  if (activeVal === null) { const noneBtn = row.querySelector('.none-opt'); if (noneBtn) noneBtn.classList.add('on'); }
 }
 
 function optPick(btn, field, val) {
@@ -581,16 +559,13 @@ function setSub(on) {
 function addSubtask() {
   const inp = document.getElementById('sub-text');
   const txt = inp.value.trim(); if(!txt) return;
-  formState.subtasks.push(txt);
-  inp.value = '';
-  renderSubtasks();
+  formState.subtasks.push(txt); inp.value = ''; renderSubtasks();
 }
 
 function deleteSubtask(i) { formState.subtasks.splice(i,1); renderSubtasks(); }
 
 function renderSubtasks() {
-  const list = document.getElementById('st-list');
-  list.innerHTML = formState.subtasks.map((s,i)=>`
+  document.getElementById('st-list').innerHTML = formState.subtasks.map((s,i)=>`
     <div class="st-item">
       <span class="st-item-txt">${esc(s)}</span>
       <button class="st-del" onclick="deleteSubtask(${i})">✕</button>
@@ -602,126 +577,77 @@ function addToQueue() {
   const tt = TASK_TYPES.find(t=>t.key===formState.typeKey);
   const name = raw ? raw : formState.subType;
   const map = mappings[formState.typeKey] || {};
-
   if (!map.projectId) {
     if (!confirm('No project mapped for '+formState.typeKey+'. Add anyway? It will go to inbox.')) return;
   }
-
-  queue.push({
-    name,
-    typeKey:      formState.typeKey,
-    subType:      formState.subType,
-    section:      formState.section,
-    projectLabel: tt.pLabel,
-    projectId:    map.projectId || null,
-    block:        formState.block,
-    time:         formState.time,
-    priority:     formState.priority,
-    subtasks:     [...formState.subtasks],
-  });
-
-  saveQueue();
-  toast('Added to queue');
-  go('home');
+  queue.push({ name, typeKey:formState.typeKey, subType:formState.subType, section:formState.section,
+    projectLabel:tt.pLabel, projectId:map.projectId||null, block:formState.block, time:formState.time,
+    priority:formState.priority, subtasks:[...formState.subtasks] });
+  saveQueue(); toast('Added to queue'); go('home');
 }
 
 // ── Sending ───────────────────────────────────────────────────────────────────
 async function startSending() {
   const token = getToken();
   if (!token) { toast('No API token'); go('settings'); return; }
-
   const log = document.getElementById('send-log');
   const backBtn = document.getElementById('send-back');
   const doneBtn = document.getElementById('send-done-btn');
   const title = document.getElementById('send-title');
-
   log.innerHTML = ''; backBtn.disabled = true; doneBtn.classList.add('hidden');
   title.textContent = 'sending…';
-
-  // Build section lookup: { projectId: { sectionName: sectionId } }
   let sectionMap = {};
   try { sectionMap = JSON.parse(localStorage.getItem('plan_sections') || '{}'); } catch {}
-
   let success = 0, failed = 0;
-
   for (const task of queue) {
     const labels = [task.projectLabel];
     if (task.block) labels.push(task.block);
     if (task.time) labels.push(task.time);
-
-    const body = {
-      content: task.name,
-      due_string: 'today',
-      priority: task.priority,
-      labels,
-    };
+    const body = { content: task.name, due_string: 'today', priority: task.priority, labels };
     if (task.projectId) body.project_id = task.projectId;
-
-    // Resolve section_id
     if (task.projectId && task.section) {
       const sid = sectionMap[task.projectId]?.[task.section];
       if (sid) body.section_id = sid;
     }
-
     log.innerHTML += `<div class="pending">→ ${esc(task.name)}</div>`;
     log.scrollTop = log.scrollHeight;
-
     try {
       const res = await fetch('https://todoist-proxy.hp-qrate.workers.dev/api/v1/tasks', {
-        method:'POST',
-        headers:{ 'Authorization':'Bearer '+token, 'Content-Type':'application/json' },
+        method:'POST', headers:{ 'Authorization':'Bearer '+token, 'Content-Type':'application/json' },
         body: JSON.stringify(body),
       });
-
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const created = await res.json();
       success++;
-
-      // Subtasks
       for (const st of (task.subtasks || [])) {
-        const stBody = {
-          content: st, parent_id: created.id,
-          due_string: 'today', priority: task.priority,
-        };
+        const stBody = { content: st, parent_id: created.id, due_string: 'today', priority: task.priority };
         const sr = await fetch('https://todoist-proxy.hp-qrate.workers.dev/api/v1/tasks', {
-          method:'POST',
-          headers:{ 'Authorization':'Bearer '+token, 'Content-Type':'application/json' },
+          method:'POST', headers:{ 'Authorization':'Bearer '+token, 'Content-Type':'application/json' },
           body: JSON.stringify(stBody),
         });
         if (!sr.ok) logLine(log, `  ↳ subtask failed: ${st}`, 'err');
         else logLine(log, `  ↳ ${esc(st)}`, 'ok');
       }
-
-      // Replace last pending line with ok
       const lines = log.querySelectorAll('.pending');
       if (lines.length) { const last=lines[lines.length-1]; last.className='ok'; last.textContent='✓ '+esc(task.name); }
-
     } catch (err) {
       failed++;
       const lines = log.querySelectorAll('.pending');
       if (lines.length) { const last=lines[lines.length-1]; last.className='err'; last.textContent='✗ '+esc(task.name)+' ('+err.message+')'; }
     }
-
-    await sleep(100); // small delay to avoid rate limiting
+    await sleep(100);
   }
-
-  // Summary
   log.innerHTML += `<div style="margin-top:8px;color:${failed?'var(--re)':'var(--gr)'}">${success} sent${failed?', '+failed+' failed':''}</div>`;
   log.scrollTop = log.scrollHeight;
   title.textContent = failed ? 'done with errors' : 'done';
-  backBtn.disabled = false;
-  doneBtn.classList.remove('hidden');
-
-  if (!failed) {
-    queue = []; saveQueue();
-  }
+  backBtn.disabled = false; doneBtn.classList.remove('hidden');
+  if (!failed) { queue = []; saveQueue(); }
 }
 
 function logLine(container, text, cls) {
   const div = document.createElement('div');
   div.className = cls; div.textContent = text;
-  container.appendChild(div);
-  container.scrollTop = container.scrollHeight;
+  container.appendChild(div); container.scrollTop = container.scrollHeight;
 }
 
 const sleep = ms => new Promise(r=>setTimeout(r,ms));
@@ -739,8 +665,7 @@ function updateConnStatus() {
   const tok = getToken();
   if (!tok) { el.className='settings-status idle'; el.textContent='not connected'; return; }
   if (todoistProjects.length) {
-    el.className='settings-status ok';
-    el.textContent=`connected · ${todoistProjects.length} projects loaded`;
+    el.className='settings-status ok'; el.textContent=`connected · ${todoistProjects.length} projects loaded`;
   } else {
     el.className='settings-status idle'; el.textContent='token set · tap connect to fetch projects';
   }
@@ -749,26 +674,18 @@ function updateConnStatus() {
 async function connectTodoist() {
   const inp = document.getElementById('api-token-input');
   let tok = inp.value.trim();
-  if (!tok || tok.startsWith('•')) {
-    tok = getToken(); // already set, just refetch
-    if (!tok) { toast('Paste your API token first'); return; }
-  }
-
+  if (!tok || tok.startsWith('•')) { tok = getToken(); if (!tok) { toast('Paste your API token first'); return; } }
   const btn = document.getElementById('btn-connect');
   btn.textContent = 'fetching…'; btn.disabled = true;
-
   try {
     const res = await fetch('https://todoist-proxy.hp-qrate.workers.dev/api/v1/projects', {
       headers:{ 'Authorization':'Bearer '+tok }
     });
-
     if (res.status === 401) throw new Error('invalid token — check and paste again');
     if (res.status === 403) throw new Error('forbidden — token may lack permissions');
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const projData = await res.json();
     const projects = Array.isArray(projData) ? projData : (projData.results || projData.projects || []);
-
-    // Fetch all sections
     const secRes = await fetch('https://todoist-proxy.hp-qrate.workers.dev/api/v1/sections', {
       headers:{ 'Authorization':'Bearer '+tok }
     });
@@ -776,18 +693,10 @@ async function connectTodoist() {
       const secData = await secRes.json();
       const sections = Array.isArray(secData) ? secData : (secData.results || secData.sections || []);
       const sectionMap = {};
-      sections.forEach(s => {
-        if (!sectionMap[s.project_id]) sectionMap[s.project_id] = {};
-        sectionMap[s.project_id][s.name] = s.id;
-      });
+      sections.forEach(s => { if (!sectionMap[s.project_id]) sectionMap[s.project_id]={}; sectionMap[s.project_id][s.name]=s.id; });
       localStorage.setItem('plan_sections', JSON.stringify(sectionMap));
     }
-
-    saveToken(tok);
-    todoistProjects = projects;
-    saveProjects();
-    updateConnStatus();
-    renderMappingRows();
+    saveToken(tok); todoistProjects = projects; saveProjects(); updateConnStatus(); renderMappingRows();
     toast('Connected — map your projects');
   } catch(err) {
     const el = document.getElementById('conn-status');
@@ -795,9 +704,7 @@ async function connectTodoist() {
     el.textContent = err.message.includes('fetch')
       ? 'network error — check your connection or try Safari if using another browser'
       : 'error: '+err.message;
-  } finally {
-    btn.textContent='connect & fetch projects'; btn.disabled=false;
-  }
+  } finally { btn.textContent='connect & fetch projects'; btn.disabled=false; }
 }
 
 function renderMappingRows() {
@@ -805,40 +712,27 @@ function renderMappingRows() {
   const rows = document.getElementById('map-rows');
   const saveBtn = document.getElementById('btn-save-map');
   sec.style.display='block'; rows.style.display='block'; saveBtn.classList.remove('hidden');
-
   rows.innerHTML = TASK_TYPES.map(tt => {
     const current = mappings[tt.key]?.projectId || '';
-    const opts = todoistProjects.map(p=>
-      `<option value="${p.id}" ${p.id===current?'selected':''}>${p.name}</option>`
-    ).join('');
-    return `<div class="f">
-      <label class="lbl">${tt.label}</label>
-      <select id="map-${tt.key}">
-        <option value="">— not mapped —</option>
-        ${opts}
-      </select>
-    </div>`;
+    const opts = todoistProjects.map(p=>`<option value="${p.id}" ${p.id===current?'selected':''}>${p.name}</option>`).join('');
+    return `<div class="f"><label class="lbl">${tt.label}</label>
+      <select id="map-${tt.key}"><option value="">— not mapped —</option>${opts}</select></div>`;
   }).join('');
 }
 
 function saveMappings() {
   TASK_TYPES.forEach(tt => {
-    const sel = document.getElementById('map-'+tt.key);
-    if (!sel) return;
+    const sel = document.getElementById('map-'+tt.key); if (!sel) return;
     const pid = sel.value;
     if (!pid) { mappings[tt.key] = {}; return; }
     const proj = todoistProjects.find(p=>p.id===pid);
     mappings[tt.key] = { projectId:pid, color:proj?.color||'', name:proj?.name||'' };
   });
-  saveMappingsStore();
-  toast('Mapping saved');
-  renderProjects(); // refresh colors on home
+  saveMappingsStore(); toast('Mapping saved'); renderProjects();
 }
 
 // ── Utils ─────────────────────────────────────────────────────────────────────
-function esc(s) {
-  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-}
+function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
 function toast(msg) {
   const el=document.getElementById('toast');
